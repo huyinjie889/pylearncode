@@ -1,5 +1,6 @@
 import socket
 import subprocess
+import struct
 
 class Tcp_Client():
     def __init__(self,ipport,backlog,buffersize):
@@ -20,10 +21,10 @@ class Tcp_Client():
         self.tcp_client.connect(self._ipport)
 
     def send(self,msg):
-        self.tcp_client.send(msg.encode("utf-8"))
+        self.tcp_client.send(msg)
 
-    def recv(self):
-        rec = self.tcp_client.recv(self._buffersize).decode("utf-8")
+    def recv(self,buffersize):
+        rec = self.tcp_client.recv(buffersize)
         return rec
 
     def exec_cmd(self,cmd):
@@ -38,8 +39,10 @@ class Tcp_Client():
     def close(self):
         self.tcp_client.close()
 
+
+
 def main():
-    ipport = ("146.56.194.21",8080)
+    ipport = ("127.0.0.1",8007)
     backlog = 5
     buffersize = 1024
 
@@ -48,17 +51,16 @@ def main():
     while True:
         cmd = input("请输入命令:")
         if not cmd:continue
-        myclient1.send(cmd)
+        myclient1.send(cmd.encode("utf-8"))
         if cmd == 'exit':
             break
-        length = int(myclient1.recv())
-        myclient1.send('ready')
+        length = struct.unpack("i",myclient1.recv(4))[0]
         rec_size = 0
-        rec_msg = ''
+        rec_msg = b''
         if rec_size < length:
-            rec_msg += myclient1.recv()
+            rec_msg += myclient1.recv(length)
             rec_size = len(rec_msg)
-        print(rec_msg)
+        print(rec_msg.decode("utf-8"))
     myclient1.close()
 
 if __name__ == '__main__':

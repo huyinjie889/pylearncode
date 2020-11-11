@@ -1,5 +1,6 @@
 import socket
 import subprocess
+import struct
 
 class Tcp_Server():
     def __init__(self,ipport,backlog,buffersize):
@@ -22,10 +23,10 @@ class Tcp_Server():
         self.conn,self.addr = self.tcp_server.accept()
 
     def send(self,msg):
-        self.conn.send(msg.encode("utf-8"))
+        self.conn.send(msg)
 
     def recv(self):
-        rec = self.conn.recv(self._buffersize).decode("utf-8")
+        rec = self.conn.recv(self._buffersize)
         return rec
 
     def exec_cmd(self,cmd):
@@ -48,16 +49,15 @@ def main():
     myserver1 = Tcp_Server(ipport, backlog, buffersize)
     myserver1.conn()
     while True:
-        rec = myserver1.recv()
+        rec = myserver1.recv().decode("utf-8")
         if rec == 'exit':
             break
         cmd_res = myserver1.exec_cmd(rec)
         print(cmd_res)
-        length = str(len(cmd_res))
-        myserver1.send(length)
-        rec = myserver1.recv()
-        if rec == 'ready':
-            myserver1.send(cmd_res)
+        length = len(cmd_res)
+        length_bytes = struct.pack("i",length)
+        myserver1.send(length_bytes)
+        myserver1.send(cmd_res.encode("utf-8"))
     myserver1.close()
 
 if __name__ == '__main__':
